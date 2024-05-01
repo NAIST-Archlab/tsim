@@ -1,0 +1,3 @@
+#!/bin/csh
+make -f Makefile-cent all clean
+make -f Makefile-cent.emax7nc all clean

@@ -1,0 +1,43 @@
+
+export CPP     = cpp -P
+export CC      = gcc
+export CFLAGS  = -Wall -O1 -Wno-unknown-pragmas -fcommon -funroll-loops -I/usr/local/include -DARMZYNQ -DEMAX7 -DTRACE_SPIKE -DVMK180
+export LDFLAGS = -L/usr/lib64 -L/usr/local/lib -lm -lrt -lX11 -lXext -lc -pthread
+
+PROGRAM	      =	tsim-vmk180.emax7
+OBJS          =	tsim.o cnnet.o mnist.o tensor.o random.o xdisp.o monitor.o imax-32st-emax7.o smax-emax7.o
+SRCS          =	($(OBJS:.o=.c))
+HEADERS       =	tensor.h global.h random.h 
+
+all:		$(PROGRAM)
+
+$(PROGRAM):	$(OBJS)
+		$(CC)  $(OBJS) -o $(PROGRAM) $(LDFLAGS) $(CFLAGS)
+
+imax-32st-emax7.c:	imax-32st.c
+		../../../proj-arm64/src/conv-mark/conv-mark $< > $<-mark.c
+		$(CPP) $(CFLAGS) $<-mark.c > $<-cppo.c
+		../../../proj-arm64/src/conv-c2d/conv-c2d -u32 $<-cppo.c
+
+smax-emax7.c:	smax.c
+		../../../proj-arm64/src/conv-mark/conv-mark $< > $<-mark.c
+		$(CPP) $(CFLAGS) $<-mark.c > $<-cppo.c
+		../../../proj-arm64/src/conv-c2d/conv-c2d -u32 $<-cppo.c
+
+.c.o:		$(HEADERS)
+		$(CC) $(CFLAGS) -c $<
+
+train:;		./$(PROGRAM) -t
+
+clean:;		rm -rf *.o *~ *-mark.c *-cppo.c *-emax7.c *-emax7s?.c
+
+###
+
+cnnet.o:	tensor.h cnnet.h random.h monitor.h emax7.h emax7lib.c
+mnist.o:	global.h tensor.h
+monitor.o:	monitor.h cnnet.h
+random.o:	tensor.h random.h
+tsim.o:		global.h tensor.h cnnet.h random.h monitor.h emax7.h emax7lib.c
+tensor.o:	global.h tensor.h
+imax-32st-emax7.o:	tensor.h cnnet.h emax7.h emax7lib.c
+smax-emax7.o:	tensor.h cnnet.h emax7.h emax7lib.c

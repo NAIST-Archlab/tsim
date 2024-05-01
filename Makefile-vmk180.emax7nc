@@ -1,0 +1,33 @@
+
+export CPP     = cpp -P
+export CC      = gcc
+export CFLAGS  = -Wall -O1 -Wno-unknown-pragmas -fcommon -funroll-loops -I/usr/local/include -DARMZYNQ -DEMAX7 -DFPDDMA -DTRACE_SPIKE -DVMK180
+export LDFLAGS = -L/usr/lib64 -L/usr/local/lib -lm -lrt -lX11 -lXext -lc -pthread
+
+PROGRAM	      =	tsim-vmk180.emax7nc
+OBJS          =	tsim.o cnnet.o mnist.o tensor.o random.o xdisp.o monitor.o imax-32st.o smax.o
+SRCS          =	($(OBJS:.o=.c))
+HEADERS       =	tensor.h global.h random.h 
+
+all:		$(PROGRAM)
+
+$(PROGRAM):	$(OBJS)
+		$(CC)  $(OBJS) -o $(PROGRAM) $(LDFLAGS) $(CFLAGS)
+
+.c.o:		$(HEADERS)
+		$(CC) $(CFLAGS) -c $<
+
+train:;		./$(PROGRAM) -t
+
+clean:;		rm -rf *.o *~
+
+###
+
+cnnet.o:	tensor.h cnnet.h random.h monitor.h emax7.h emax7lib.c
+mnist.o:	global.h tensor.h
+monitor.o:	monitor.h cnnet.h 
+random.o:	tensor.h random.h
+tsim.o:		global.h tensor.h cnnet.h random.h monitor.h emax7.h emax7lib.c
+tensor.o:	global.h tensor.h
+imax-32st.o:	tensor.h cnnet.h emax7.h emax7lib.c
+smax.o:		tensor.h cnnet.h emax7.h emax7lib.c
